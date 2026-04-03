@@ -166,14 +166,19 @@ async def get_stats():
         if not has_escalation:
             deflected += 1
 
-        # Resolution: only measured for sessions where an action was attempted
+        # Resolution: only counted when an action tool succeeded without escalation
         has_action = any(
             e["role"] == "tool_call" and e.get("tool") in action_tools
             for e in events
         )
+        action_succeeded = any(
+            e["role"] == "tool_result" and e.get("tool") in action_tools
+            and e.get("data", {}).get("success") is True
+            for e in events
+        )
         if has_action:
             action_sessions += 1
-            if not has_escalation:
+            if action_succeeded and not has_escalation:
                 resolved += 1
 
     return {
