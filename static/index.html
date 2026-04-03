@@ -543,14 +543,7 @@
       sendMessage();
     }
 
-    async function resetChat() {
-      if (sessionId) {
-        await fetch("/api/reset", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: sessionId }),
-        });
-      }
+    function resetChat() {
       sessionId = null;
       lastRating = 0;
       messagesEl.innerHTML = '<div class="message assistant">Hi! I\'m Bookly\'s support assistant. How can I help you today?</div>';

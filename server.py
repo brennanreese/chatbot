@@ -138,17 +138,23 @@ async def get_stats():
 
     action_tools = {"initiate_return", "send_password_reset"}
 
+    active_sessions = 0
+
     for agent in sessions.values():
         events = agent.events
         roles = [e["role"] for e in events]
 
-        # Collect ratings
+        # Collect ratings (even from empty sessions)
         for e in events:
             if e["role"] == "rating":
                 ratings.append(e["stars"])
 
-        # Count customer turns
+        # Skip sessions with no customer messages (e.g., reset but not removed)
         user_turns = roles.count("user")
+        if user_turns == 0:
+            continue
+
+        active_sessions += 1
         total_turns += user_turns
 
         # Deflection: no human escalation occurred (API errors don't count)
@@ -157,7 +163,7 @@ async def get_stats():
             (e["role"] == "tool_call" and e.get("tool") == "escalate_to_human")
             for e in events
         )
-        if not has_escalation and user_turns > 0:
+        if not has_escalation:
             deflected += 1
 
         # Resolution: only measured for sessions where an action was attempted
@@ -171,12 +177,12 @@ async def get_stats():
                 resolved += 1
 
     return {
-        "sessions": total,
+        "sessions": active_sessions,
         "avg_rating": round(sum(ratings) / len(ratings), 2) if ratings else None,
         "total_ratings": len(ratings),
-        "deflection_rate": round(deflected / total, 2) if total else 0,
+        "deflection_rate": round(deflected / active_sessions, 2) if active_sessions else 0,
         "resolution_rate": round(resolved / action_sessions, 2) if action_sessions else None,
-        "avg_turns": round(total_turns / total, 1) if total else 0,
+        "avg_turns": round(total_turns / active_sessions, 1) if active_sessions else 0,
     }
 
 
