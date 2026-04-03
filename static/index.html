@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bookly Support</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0A0A0B;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-wrapper {
+      display: flex;
+      gap: 16px;
+      align-items: stretch;
+      max-height: 720px;
+    }
+
+    .chat-container {
+      width: 460px;
+      background: #141416;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, #5754FF, #7370FF);
+      color: #fff;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header h1 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .chat-header .subtitle {
+      font-size: 12px;
+      opacity: 0.8;
+      font-weight: 400;
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .header-btn {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 5rem;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      transition: background 0.2s ease;
+    }
+
+    .header-btn:hover { background: rgba(255,255,255,0.25); }
+    .header-btn.active { background: rgba(255,255,255,0.30); }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 400px;
+      max-height: 540px;
+      background: #141416;
+    }
+
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    .message {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: #5754FF;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant {
+      align-self: flex-start;
+      background: rgba(255,255,255,0.07);
+      color: #E0E0E0;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.system {
+      align-self: center;
+      background: transparent;
+      color: #6B6B76;
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    .rating-row {
+      align-self: flex-start;
+      display: flex;
+      gap: 2px;
+      padding: 0 4px;
+    }
+
+    .rating-row .star {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #3A3A40;
+      transition: color 0.15s ease;
+      padding: 0 1px;
+      line-height: 1;
+    }
+
+    .rating-row .star:hover,
+    .rating-row .star.hovered {
+      color: #9D9BFF;
+    }
+
+    .rating-row .star.selected {
+      color: #9D9BFF;
+      cursor: default;
+    }
+
+    .rating-row.submitted .star {
+      cursor: default;
+    }
+
+    .typing-indicator {
+      align-self: flex-start;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      border-bottom-left-radius: 4px;
+      display: none;
+      margin: 0 16px;
+    }
+
+    .typing-indicator span {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: #5754FF;
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    .input-area {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      gap: 8px;
+      background: #141416;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      background: rgba(255,255,255,0.05);
+      color: #E0E0E0;
+      transition: border-color 0.2s ease;
+    }
+
+    .input-area input::placeholder { color: #6B6B76; }
+    .input-area input:focus { border-color: #5754FF; }
+
+    .input-area button {
+      padding: 10px 18px;
+      background: #5754FF;
+      color: #fff;
+      border: none;
+      border-radius: 5rem;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: background 0.2s ease;
+    }
+
+    .input-area button:hover { background: #7370FF; }
+    .input-area button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .sample-queries {
+      padding: 8px 16px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .sample-btn {
+      background: rgba(87,84,255,0.12);
+      color: #9D9BFF;
+      border: 1px solid rgba(87,84,255,0.2);
+      padding: 5px 10px;
+      border-radius: 5rem;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .sample-btn:hover {
+      background: rgba(87,84,255,0.22);
+      color: #C2C1FF;
+    }
+
+    /* --- Debug panel --- */
+
+    .debug-panel {
+      width: 400px;
+      background: #141416;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .debug-panel.open { display: flex; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: #9D9BFF;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #6B6B76;
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .debug-header {
+      background: #1C1C1F;
+      color: #9D9BFF;
+      padding: 14px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .debug-events {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+    }
+
+    .debug-events::-webkit-scrollbar { width: 4px; }
+    .debug-events::-webkit-scrollbar-track { background: transparent; }
+    .debug-events::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    .debug-event {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .debug-event .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .debug-event .event-tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .debug-event .event-time {
+      color: #6B6B76;
+      font-size: 10px;
+    }
+
+    .debug-event .event-body {
+      color: #A0A0A8;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+
+    .tag-user { background: #5754FF30; color: #9D9BFF; }
+    .tag-assistant { background: #22C55E30; color: #86EFAC; }
+    .tag-tool_call { background: #F59E0B30; color: #FBBF24; }
+    .tag-tool_result { background: #06B6D430; color: #67E8F9; }
+    .tag-escalation { background: #EF444430; color: #FCA5A5; }
+    .tag-tokens { background: #A855F730; color: #D8B4FE; }
+    .tag-rating { background: #EC489930; color: #F9A8D4; }
+
+    .debug-empty {
+      color: #6B6B76;
+      text-align: center;
+      padding: 40px 16px;
+      font-family: "Inter", sans-serif;
+      font-style: italic;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-wrapper">
+  <div class="chat-container">
+    <div class="chat-header">
+      <div>
+        <h1>Bookly Support</h1>
+        <div class="subtitle">AI-powered customer support</div>
+      </div>
+      <div class="header-buttons">
+        <button class="header-btn" id="debugToggle" onclick="toggleDebug()">Admin</button>
+        <button class="header-btn" onclick="resetChat()">New Chat</button>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="message assistant">Hi! I'm Bookly's support assistant. How can I help you today?</div>
+    </div>
+
+    <div class="typing-indicator" id="typing">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="sample-queries" id="samples">
+      <button class="sample-btn" onclick="sendSample(this)">Where's my order?</button>
+      <button class="sample-btn" onclick="sendSample(this)">I want to return a book</button>
+      <button class="sample-btn" onclick="sendSample(this)">What's your shipping policy?</button>
+      <button class="sample-btn" onclick="sendSample(this)">My issue is complex, I want to speak to a human agent!</button>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="input" placeholder="Type your message..." onkeydown="if(event.key==='Enter')sendMessage()" autofocus />
+      <button id="sendBtn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <div class="debug-panel" id="debugPanel">
+    <div class="debug-header">Stats</div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-value" id="statRating">--</div><div class="stat-label">Avg Rating</div></div>
+      <div class="stat-card"><div class="stat-value" id="statDeflection">--</div><div class="stat-label">Deflection</div></div>
+      <div class="stat-card"><div class="stat-value" id="statResolution">--</div><div class="stat-label">Resolution</div></div>
+      <div class="stat-card"><div class="stat-value" id="statTurns">--</div><div class="stat-label">Avg Turns</div></div>
+    </div>
+    <div class="debug-header">Event Trace</div>
+    <div class="debug-events" id="debugEvents">
+      <div class="debug-empty">Send a message to see the agent's event trace here.</div>
+    </div>
+  </div>
+  </div><!-- /app-wrapper -->
+
+  <script>
+    let sessionId = null;
+    let debugOpen = false;
+    let lastRating = 0;
+    const messagesEl = document.getElementById("messages");
+    const inputEl = document.getElementById("input");
+    const sendBtn = document.getElementById("sendBtn");
+    const typingEl = document.getElementById("typing");
+    const samplesEl = document.getElementById("samples");
+    const debugPanel = document.getElementById("debugPanel");
+    const debugEvents = document.getElementById("debugEvents");
+    const debugToggle = document.getElementById("debugToggle");
+
+    function addMessage(text, role) {
+      const div = document.createElement("div");
+      div.className = `message ${role}`;
+      div.textContent = text;
+      messagesEl.appendChild(div);
+
+      // Show star rating only on the latest assistant message.
+      // Remove all previous rating rows — only one visible at a time.
+      messagesEl.querySelectorAll(".rating-row").forEach(r => r.remove());
+
+      if (role === "assistant") {
+        const row = document.createElement("div");
+        row.className = "rating-row";
+        for (let i = 1; i <= 5; i++) {
+          const star = document.createElement("button");
+          star.className = "star";
+          star.textContent = "\u2605";
+          star.addEventListener("mouseenter", () => {
+            if (row.classList.contains("submitted")) return;
+            row.querySelectorAll(".star").forEach((s, idx) => {
+              s.classList.toggle("hovered", idx < i);
+            });
+          });
+          star.addEventListener("mouseleave", () => {
+            if (row.classList.contains("submitted")) return;
+            row.querySelectorAll(".star").forEach(s => s.classList.remove("hovered"));
+          });
+          star.addEventListener("click", () => submitRating(row, i));
+          row.appendChild(star);
+        }
+        // Pre-fill with previous rating if one exists
+        if (lastRating > 0) {
+          row.querySelectorAll(".star").forEach((s, idx) => {
+            s.classList.toggle("selected", idx < lastRating);
+          });
+        }
+        messagesEl.appendChild(row);
+      }
+
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function submitRating(row, stars) {
+      if (!sessionId) return;
+      lastRating = stars;
+      row.querySelectorAll(".star").forEach((s, idx) => {
+        s.classList.remove("hovered");
+        s.classList.toggle("selected", idx < stars);
+      });
+      await fetch("/api/rating", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, rating: stars }),
+      });
+      await refreshDebugPanel();
+    }
+
+    function setLoading(on) {
+      typingEl.style.display = on ? "block" : "none";
+      sendBtn.disabled = on;
+      inputEl.disabled = on;
+      if (on) messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      inputEl.value = "";
+      samplesEl.style.display = "none";
+      addMessage(text, "user");
+      setLoading(true);
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId, message: text }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Server error");
+        }
+
+        const data = await res.json();
+        sessionId = data.session_id;
+        addMessage(data.reply, "assistant");
+
+        // Always refresh debug panel data so it's current when toggled open
+        await refreshDebugPanel();
+      } catch (e) {
+        addMessage(`Error: ${e.message}`, "system");
+      } finally {
+        setLoading(false);
+        inputEl.focus();
+      }
+    }
+
+    function sendSample(btn) {
+      inputEl.value = btn.textContent;
+      sendMessage();
+    }
+
+    async function resetChat() {
+      if (sessionId) {
+        await fetch("/api/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+      }
+      sessionId = null;
+      lastRating = 0;
+      messagesEl.innerHTML = '<div class="message assistant">Hi! I\'m Bookly\'s support assistant. How can I help you today?</div>';
+      samplesEl.style.display = "flex";
+      debugEvents.innerHTML = '<div class="debug-empty">Send a message to see the agent\'s event trace here.</div>';
+    }
+
+    // --- Debug panel ---
+
+    function toggleDebug() {
+      debugOpen = !debugOpen;
+      debugPanel.classList.toggle("open", debugOpen);
+      debugToggle.classList.toggle("active", debugOpen);
+      if (debugOpen) {
+        refreshStats();
+        if (sessionId) refreshDebugPanel();
+      }
+    }
+
+    async function refreshDebugPanel() {
+      if (!sessionId) return;
+      try {
+        const res = await fetch(`/api/events/${sessionId}`);
+        const data = await res.json();
+        renderEvents(data.events);
+      } catch (e) {
+        debugEvents.innerHTML = '<div class="debug-empty">Failed to load events.</div>';
+      }
+      refreshStats();
+    }
+
+    async function refreshStats() {
+      try {
+        const res = await fetch("/api/stats");
+        const s = await res.json();
+        document.getElementById("statRating").textContent = s.avg_rating != null ? `${s.avg_rating} / 5` : "--";
+        document.getElementById("statDeflection").textContent = s.sessions > 0 ? `${Math.round(s.deflection_rate * 100)}%` : "--";
+        document.getElementById("statResolution").textContent = s.resolution_rate != null ? `${Math.round(s.resolution_rate * 100)}%` : "--";
+        document.getElementById("statTurns").textContent = s.sessions > 0 ? s.avg_turns : "--";
+      } catch (e) {
+        // leave as --
+      }
+    }
+
+    function renderEvents(events) {
+      if (!events.length) {
+        debugEvents.innerHTML = '<div class="debug-empty">No events yet.</div>';
+        return;
+      }
+
+      let prevTs = events[0].ts;
+      debugEvents.innerHTML = events.map((ev, idx) => {
+        const deltaMs = idx === 0 ? 0 : Math.round((ev.ts - prevTs) * 1000);
+        const elapsed = deltaMs > 0 ? `+${deltaMs}ms` : "";
+        prevTs = ev.ts;
+        const tag = ev.role;
+        const body = formatEventBody(ev);
+        return `
+          <div class="debug-event">
+            <div class="event-header">
+              <span class="event-tag tag-${tag}">${tag}</span>
+              <span class="event-time">${elapsed}</span>
+            </div>
+            <div class="event-body">${body}</div>
+          </div>`;
+      }).join("");
+
+      debugEvents.scrollTop = debugEvents.scrollHeight;
+    }
+
+    function formatEventBody(ev) {
+      switch (ev.role) {
+        case "user":
+          return esc(ev.content);
+        case "assistant":
+          return esc(truncate(ev.content, 200));
+        case "tool_call":
+          return `${esc(ev.tool)}(${esc(JSON.stringify(ev.args))})`;
+        case "tool_result":
+          return `${esc(ev.tool)} returned:\n${esc(truncate(JSON.stringify(ev.data, null, 2), 300))}`;
+        case "escalation":
+          return `reason: ${esc(ev.reason)}${ev.error ? `\nerror: ${esc(ev.error)}` : ""}${ev.tool ? `\ntool: ${esc(ev.tool)}` : ""}`;
+        case "tokens":
+          return `prompt: ${ev.prompt}  completion: ${ev.completion}  total: ${ev.total}`;
+        case "rating":
+          return `${"★".repeat(ev.stars)}${"☆".repeat(5 - ev.stars)}`;
+        default:
+          return esc(JSON.stringify(ev));
+      }
+    }
+
+    function truncate(str, max) {
+      if (!str) return "";
+      return str.length > max ? str.slice(0, max) + "..." : str;
+    }
+
+    function esc(str) {
+      if (!str) return "";
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
